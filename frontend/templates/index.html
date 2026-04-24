@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fake News Detector</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            transition: border 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #resultDiv {
+            margin-top: 30px;
+        }
+        .result-card {
+            padding: 25px;
+            border-radius: 12px;
+            animation: slideIn 0.4s ease;
+        }
+        .result-card.fake {
+            background: #ffe5e5;
+            border-left: 5px solid #ff4444;
+        }
+        .result-card.real {
+            background: #e5ffe5;
+            border-left: 5px solid #44ff44;
+        }
+        .result-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .result-card.fake .result-title { color: #cc0000; }
+        .result-card.real .result-title { color: #00aa00; }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: #555; font-weight: 500; }
+        .metric-value { color: #222; font-weight: 700; }
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📰 AI Fake News Detector</h1>
+        <p class="subtitle">Powered by TF-IDF + Logistic Regression | 93.2% Accuracy</p>
+        
+        <textarea id="newsInput" placeholder="Paste any news article here to check if it's real or fake..."></textarea>
+        <button onclick="checkNews()">Analyze News Article</button>
+        
+        <div id="resultDiv"></div>
+        
+        <div class="footer">Built for academic project | Model F1-Score: 93.6%</div>
+    </div>
+
+    <script>
+        function checkNews() {
+            const newsText = document.getElementById('newsInput').value;
+            const resultDiv = document.getElementById('resultDiv');
+            
+            if (newsText.trim() === "") {
+                resultDiv.innerHTML = `<div class="result-card" style="background:#fff3cd;border-left:5px solid #ffc107;">
+                    <div class="result-title" style="color:#856404;">⚠️ Please enter some text</div>
+                </div>`;
+                return;
+            }
+
+            resultDiv.innerHTML = `<div class="loading">🔍 Analyzing article...</div>`;
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ news: newsText })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const isFake = data.prediction === 'Fake';
+                resultDiv.innerHTML = `
+                    <div class="result-card ${isFake ? 'fake' : 'real'}">
+                        <div class="result-title">${isFake ? '❌ Fake News Detected' : '✅ Real News Verified'}</div>
+                        <div class="metric">
+                            <span class="metric-label">Confidence Level</span>
+                            <span class="metric-value">${data.confidence}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Model Accuracy</span>
+                            <span class="metric-value">${data.accuracy}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">F1-Score</span>
+                            <span class="metric-value">${data.f1_score}%</span>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `<div class="result-card fake">
+                    <div class="result-title">❌ Error</div>
+                    <p style="color:#cc0000;">Could not connect to server. Make sure Flask is running.</p>
+                </div>`;
+            });
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
