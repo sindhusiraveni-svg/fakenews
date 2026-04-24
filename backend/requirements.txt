@@ -1,4 +1,5 @@
-﻿absl-py==2.4.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+absl-py==2.4.0
 accelerate==1.13.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.5
@@ -82,14 +83,13 @@ tensorboard==2.15.2
 tensorboard-data-server==0.7.2
 tensorflow==2.15.0
 tensorflow-estimator==2.15.0
-tensorflow==2.15.0
 tensorflow-io-gcs-filesystem==0.31.0
 termcolor==3.3.0
 threadpoolctl==3.6.0
 tokenizers==0.22.2
-torch==2.2.2+cpu
-torchaudio==2.11.0+cpu
-torchvision==0.26.0+cpu
+torch==2.2.2
+torchaudio==2.2.2
+torchvision==0.17.2
 tqdm==4.67.3
 transformers==4.44.2
 typer==0.24.1
